@@ -31,9 +31,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
+      - name: Create data directories
+        run: |
+          mkdir -p data/raw data/warehouse
+      
       - name: Generate synthetic data (DuckDB)
         run: |
-          python data_generation/generate_saas_data.py
+          pip install -r data_generation/requirements.txt
+          cd data_generation
+          python generate_saas_data.py
       
       - name: Install dbt packages
         run: |
@@ -44,3 +50,5 @@ jobs:
         run: |
           cd dbt_project
           dbt build
+        env:
+          DBT_PROFILES_DIR: .
