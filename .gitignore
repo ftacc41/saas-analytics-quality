@@ -52,3 +52,6 @@ dashboards/evidence_project/.evidence/
 
 # Local progress tracking (intentionally not committed)
 progress.md
+
+# Cursor rules (local dev tooling)
+.cursorrules
