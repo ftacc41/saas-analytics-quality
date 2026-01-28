@@ -149,7 +149,10 @@ def generate_customers(num_customers: int) -> pd.DataFrame:
             'company_size': np.random.choice(['Small', 'Medium', 'Large']) if segments[i] != 'Enterprise' else 'Large',
             'country': fake.country(),
             'created_at': signup_date,
-            'updated_at': end_date if end_date else signup_date + timedelta(days=np.random.randint(0, 90))
+            'updated_at': min(
+                END_DATE,
+                end_date if end_date else signup_date + timedelta(days=int(np.random.randint(0, 90)))
+            )
         })
     
     return pd.DataFrame(customers)
@@ -268,7 +271,10 @@ def generate_subscriptions(customers_df: pd.DataFrame, plans_df: pd.DataFrame, n
             'billing_cycle': billing_cycle,
             'amount': base_price,
             'created_at': start_date,
-            'updated_at': end_date if end_date else start_date + timedelta(days=np.random.randint(0, 30))
+            'updated_at': min(
+                END_DATE,
+                end_date if end_date else start_date + timedelta(days=int(np.random.randint(0, 30)))
+            )
         })
         
         subscription_id += 1
