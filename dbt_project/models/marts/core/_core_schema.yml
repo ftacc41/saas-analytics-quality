@@ -1,0 +1,190 @@
+version: 2
+
+models:
+  - name: dim_dates
+    description: |
+      Date dimension used for consistent time-series reporting.
+
+      Business Context:
+      Standardizes day and month fields so all metrics use the same calendar logic.
+
+      Grain: One row per date_day
+    columns:
+      - name: date_day
+        description: "Calendar day (YYYY-MM-DD)"
+        tests:
+          - unique
+          - not_null
+
+      - name: date_month
+        description: "First day of the month for the date_day"
+        tests:
+          - not_null
+
+  - name: dim_customers
+    description: |
+      Customer dimension with current attributes and derived segmentation.
+
+      Business Context:
+      Canonical customer table for downstream subscription, churn, retention, and LTV analysis.
+
+      Grain: One row per customer_id
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: "Customer email address"
+        tests:
+          - not_null
+
+      - name: customer_segment
+        description: "Derived segment based on company_size (smb / mid-market / enterprise)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smb', 'mid-market', 'enterprise', 'unknown']
+
+      - name: signup_date
+        description: "Customer signup date"
+        tests:
+          - not_null
+
+  - name: dim_plans
+    description: |
+      Plan dimension describing product packaging and pricing.
+
+      Business Context:
+      Used to segment revenue, retention, and churn by plan tier and pricing.
+
+      Grain: One row per plan_id
+    columns:
+      - name: plan_id
+        description: "Unique plan identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: plan_tier
+        description: "Plan tier (starter / professional / enterprise)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['starter', 'professional', 'enterprise']
+
+      - name: base_price_monthly
+        description: "Monthly list price"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+      - name: base_price_annual
+        description: "Annual list price"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+  - name: fct_subscriptions
+    description: |
+      Subscription fact table at the subscription grain.
+
+      Business Context:
+      Core subscription table for churn, plan performance, and MRR modeling.
+
+      Grain: One row per subscription_id
+    columns:
+      - name: subscription_id
+        description: "Unique subscription identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+      - name: plan_id
+        description: "Foreign key to plan"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_plans')
+              field: plan_id
+
+      - name: status
+        description: "Subscription status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'paused', 'churned', 'upgraded', 'downgraded']
+
+      - name: billing_cycle
+        description: "Billing cycle used for revenue normalization"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['monthly', 'annual']
+
+      - name: amount
+        description: "Billed amount in the subscription billing cycle"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+      - name: mrr_amount
+        description: "Monthly recurring revenue (raw field from source)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+  - name: fct_monthly_recurring_revenue
+    description: |
+      Monthly recurring revenue fact table at a customer-month grain.
+
+      Business Context:
+      Provides the canonical MRR time series for dashboards and for calculating growth and retention metrics.
+
+      Grain: One row per customer per month
+    columns:
+      - name: customer_month_id
+        description: "Surrogate key for customer-month"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+      - name: date_month
+        description: "First day of the month"
+        tests:
+          - not_null
+
+      - name: mrr_amount
+        description: "Total customer MRR for the month (paused subscriptions contribute 0)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+

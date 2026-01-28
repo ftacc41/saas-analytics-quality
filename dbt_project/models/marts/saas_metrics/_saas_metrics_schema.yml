@@ -1,0 +1,322 @@
+version: 2
+
+models:
+  - name: mrr_analysis
+    description: |
+      Monthly recurring revenue trend with MRR movement breakdown.
+
+      Business Context:
+      Powers MRR dashboards and explains how revenue changes month over month via:
+      - New MRR
+      - Expansion MRR
+      - Contraction MRR
+      - Churned MRR
+
+      Grain: One row per month per customer_segment
+    columns:
+      - name: segment_month_id
+        description: "Surrogate key for segment-month"
+        tests:
+          - unique
+          - not_null
+
+      - name: date_month
+        description: "First day of the month"
+        tests:
+          - not_null
+
+      - name: customer_segment
+        description: "Customer segment"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smb', 'mid-market', 'enterprise', 'unknown']
+
+      - name: total_mrr
+        description: "Total MRR for the segment-month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+      - name: new_mrr
+        description: "MRR from customers with MRR=0 in prior month and >0 in current month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+      - name: churned_mrr
+        description: "MRR lost from customers with MRR>0 in prior month and 0 in current month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+  - name: churn_analysis
+    description: |
+      Monthly customer and revenue churn rates by segment.
+
+      Business Context:
+      Measures churn as period-specific loss of customers and revenue relative to the customers/revenue
+      that existed at the start of the period.
+
+      Grain: One row per month per customer_segment
+    columns:
+      - name: segment_month_id
+        description: "Surrogate key for segment-month"
+        tests:
+          - unique
+          - not_null
+
+      - name: date_month
+        description: "First day of the month"
+        tests:
+          - not_null
+
+      - name: customer_segment
+        description: "Customer segment"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smb', 'mid-market', 'enterprise', 'unknown']
+
+      - name: starting_customers
+        description: "Customers with MRR > 0 in the prior month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+      - name: churned_customers
+        description: "Customers with MRR > 0 in the prior month and MRR = 0 in the current month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+      - name: customer_churn_rate
+        description: "Churned_customers / starting_customers"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+      - name: revenue_churn_rate
+        description: "Churned_mrr / starting_mrr"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+  - name: cohort_retention
+    description: |
+      Customer cohort retention by signup month.
+
+      Business Context:
+      Cohort retention is the primary lens for understanding whether newer customers retain better
+      than older cohorts and how quickly customers churn after signup.
+
+      Grain: One row per cohort_month per customer_segment per months_since_signup
+    columns:
+      - name: cohort_segment_period_id
+        description: "Surrogate key for cohort-segment-period"
+        tests:
+          - unique
+          - not_null
+
+      - name: cohort_month
+        description: "Signup cohort month (YYYY-MM-01)"
+        tests:
+          - not_null
+
+      - name: customer_segment
+        description: "Customer segment"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smb', 'mid-market', 'enterprise', 'unknown']
+
+      - name: months_since_signup
+        description: "Number of months since cohort month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 120
+
+      - name: cohort_customers
+        description: "Total customers in cohort-segment"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+      - name: active_customers
+        description: "Active customers in the period (MRR > 0)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+      - name: retention_rate
+        description: "Active_customers / cohort_customers"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+  - name: customer_lifetime_value
+    description: |
+      Estimated customer lifetime value (LTV) by segment using ARPU and average monthly churn.
+
+      Business Context:
+      This model provides a simple, explainable LTV estimate:
+      - \(expected_lifetime_months = 1 / churn_rate\)
+      - \(LTV = ARPU * expected_lifetime_months\)
+
+      Grain: One row per segment for the as_of_month snapshot
+    columns:
+      - name: segment_as_of_id
+        description: "Surrogate key for segment snapshot"
+        tests:
+          - unique
+          - not_null
+
+      - name: as_of_month
+        description: "As-of month used for the recent-window calculation"
+        tests:
+          - not_null
+
+      - name: customer_segment
+        description: "Customer segment"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smb', 'mid-market', 'enterprise', 'unknown']
+
+      - name: arpu
+        description: "Average revenue per user (monthly) over recent months"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+      - name: avg_monthly_customer_churn_rate
+        description: "Average monthly customer churn rate over recent months"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+      - name: lifetime_value
+        description: "Estimated lifetime value (ARPU / churn_rate)"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+              row_condition: "lifetime_value is not null"
+
+      - name: expected_lifetime_months
+        description: "Expected customer lifetime in months (capped at 120 months for sanity)"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 120
+              row_condition: "expected_lifetime_months is not null"
+
+  - name: unit_economics
+    description: |
+      Unit economics by segment using LTV and an assumed CAC (parameterized via dbt vars).
+
+      Business Context:
+      Synthetic data does not include marketing spend, so CAC is treated as a configurable assumption.
+
+      Grain: One row per segment for the as_of_month snapshot
+    columns:
+      - name: segment_as_of_id
+        description: "Surrogate key for segment snapshot"
+        tests:
+          - unique
+          - not_null
+
+      - name: assumed_cac
+        description: "Assumed customer acquisition cost (CAC) for the segment"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+              row_condition: "assumed_cac is not null"
+
+      - name: ltv_to_cac_ratio
+        description: "LTV / CAC"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000
+              row_condition: "ltv_to_cac_ratio is not null"
+
+      - name: payback_months
+        description: "CAC / ARPU"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 120
+              row_condition: "payback_months is not null"
+
+  - name: net_revenue_retention
+    description: |
+      Net and gross revenue retention by month and segment.
+
+      Business Context:
+      - NRR includes expansion and measures how much revenue is retained from existing customers.
+      - GRR excludes expansion and measures the “downside” retention of revenue.
+
+      Grain: One row per month per customer_segment
+    columns:
+      - name: segment_month_id
+        description: "Surrogate key for segment-month"
+        tests:
+          - unique
+          - not_null
+
+      - name: date_month
+        description: "First day of the month"
+        tests:
+          - not_null
+
+      - name: customer_segment
+        description: "Customer segment"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['smb', 'mid-market', 'enterprise', 'unknown']
+
+      - name: net_revenue_retention
+        description: "NRR = (starting + expansion - contraction - churn) / starting"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 5
+
+      - name: gross_revenue_retention
+        description: "GRR = (starting - contraction - churn) / starting"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+

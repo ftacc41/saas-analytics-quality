@@ -1,0 +1,187 @@
+version: 2
+
+models:
+  - name: int_subscription_periods
+    description: |
+      Subscription records prepared for time-based subscription analytics.
+
+      Business Context:
+      This intermediate model is the base for building subscription fact tables and
+      MRR by time period. As we add lifecycle logic (upgrades, downgrades, pauses),
+      this model will represent consistent subscription periods over time.
+
+      Grain: One row per subscription_id (initial scaffold)
+    columns:
+      - name: subscription_id
+        description: "Unique subscription identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: mrr_amount
+        description: "Normalized monthly recurring revenue"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+  - name: int_customer_cohorts
+    description: |
+      Customer cohorts derived from signup month.
+
+      Business Context:
+      Cohorts are used to measure retention and revenue retention over time by grouping
+      customers who started in the same month.
+
+      Grain: One row per customer_id
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: cohort_month
+        description: "First day of the signup month (YYYY-MM-01)"
+        tests:
+          - not_null
+
+  - name: int_monthly_usage
+    description: |
+      Monthly usage rollup per customer.
+
+      Business Context:
+      Product usage is a leading indicator of retention and expansion. This model provides a
+      standardized customer-month usage table for cohort retention and churn feature engineering.
+
+      Grain: One row per customer_id per usage_month
+    columns:
+      - name: customer_month_id
+        description: "Surrogate key for customer-month"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: usage_month
+        description: "First day of the month for usage aggregation"
+        tests:
+          - not_null
+
+      - name: event_count
+        description: "Total number of usage events in the month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000000
+
+      - name: total_usage_quantity
+        description: "Sum of usage_quantity across all events in the month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+
+  - name: int_payment_history
+    description: |
+      Monthly payment rollup per subscription.
+
+      Business Context:
+      Payments support revenue validation and involuntary churn analysis by tracking successful,
+      failed, and refunded payment outcomes at a monthly grain.
+
+      Grain: One row per subscription_id per payment_month
+    columns:
+      - name: subscription_month_id
+        description: "Surrogate key for subscription-month"
+        tests:
+          - unique
+          - not_null
+
+      - name: subscription_id
+        description: "Foreign key to subscription"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_subscriptions')
+              field: subscription_id
+
+      - name: payment_month
+        description: "First day of the month for payment aggregation"
+        tests:
+          - not_null
+
+      - name: payment_count
+        description: "Total number of payment events in the month"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000000
+
+      - name: net_amount
+        description: "Net payment amount in the month (refunds may be negative)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000000
+              max_value: 1000000000
+
+  - name: int_customer_health_score
+    description: |
+      Customer health snapshot as-of the latest available activity date across usage, payments, and support.
+
+      Business Context:
+      This model produces a simple, explainable health score (0-100) using recent usage, open support tickets,
+      and payment failure rate. It supports churn analysis and monitoring.
+
+      Grain: One row per customer_id
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier"
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: as_of_date
+        description: "Snapshot date used for recency windows"
+        tests:
+          - not_null
+
+      - name: payment_failure_rate_last_90d
+        description: "Failed payments / total payments in the last 90 days"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+      - name: health_score
+        description: "Composite health score (0-100); higher is healthier"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+

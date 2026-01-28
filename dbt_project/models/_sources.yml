@@ -1,0 +1,94 @@
+version: 2
+
+sources:
+  - name: raw_saas
+    description: "Raw SaaS subscription data loaded from CSV files"
+    schema: main
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+    
+    tables:
+      - name: customers
+        description: "Customer master data with signup information and attributes"
+        loaded_at_field: updated_at
+        columns:
+          - name: customer_id
+            description: "Unique customer identifier"
+            tests:
+              - unique
+              - not_null
+      
+      - name: subscriptions
+        description: "Subscription records with lifecycle events"
+        loaded_at_field: updated_at
+        columns:
+          - name: subscription_id
+            description: "Unique subscription identifier"
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: "Foreign key to customers table"
+            tests:
+              - relationships:
+                  to: source('raw_saas', 'customers')
+                  field: customer_id
+      
+      - name: plans
+        description: "Subscription plan catalog"
+        loaded_at_field: created_date
+        columns:
+          - name: plan_id
+            description: "Unique plan identifier"
+            tests:
+              - unique
+              - not_null
+      
+      - name: payments
+        description: "Payment transaction records"
+        loaded_at_field: created_at
+        columns:
+          - name: payment_id
+            description: "Unique payment identifier"
+            tests:
+              - unique
+              - not_null
+          - name: subscription_id
+            description: "Foreign key to subscriptions table"
+            tests:
+              - relationships:
+                  to: source('raw_saas', 'subscriptions')
+                  field: subscription_id
+      
+      - name: usage_events
+        description: "Product usage event logs"
+        loaded_at_field: created_at
+        columns:
+          - name: event_id
+            description: "Unique event identifier"
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: "Foreign key to customers table"
+            tests:
+              - relationships:
+                  to: source('raw_saas', 'customers')
+                  field: customer_id
+      
+      - name: support_tickets
+        description: "Customer support ticket records"
+        loaded_at_field: created_at
+        columns:
+          - name: ticket_id
+            description: "Unique ticket identifier"
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: "Foreign key to customers table"
+            tests:
+              - relationships:
+                  to: source('raw_saas', 'customers')
+                  field: customer_id

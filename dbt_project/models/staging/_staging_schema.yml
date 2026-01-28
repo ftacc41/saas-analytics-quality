@@ -1,0 +1,263 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: |
+      Cleaned customer records from the raw SaaS source.
+
+      Business Context:
+      This model standardizes customer attributes and provides the canonical customer grain
+      for downstream subscription, usage, and support analytics.
+
+      Grain: One row per customer_id
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: "Customer email address (lowercased and trimmed)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
+
+      - name: account_status
+        description: "Customer lifecycle status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'churned']
+
+      - name: signup_date
+        description: "Date the customer signed up"
+        tests:
+          - not_null
+
+  - name: stg_subscriptions
+    description: |
+      Cleaned subscription records from the raw SaaS source.
+
+      Business Context:
+      This model represents subscription lifecycle events and billing details needed for MRR,
+      churn, and plan performance analytics.
+
+      Grain: One row per subscription_id
+    columns:
+      - name: subscription_id
+        description: "Unique subscription identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: plan_id
+        description: "Foreign key to plan"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_plans')
+              field: plan_id
+
+      - name: status
+        description: "Subscription lifecycle status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'paused', 'churned', 'upgraded', 'downgraded']
+
+      - name: billing_cycle
+        description: "Billing cycle used to normalize revenue"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['monthly', 'annual']
+
+      - name: mrr_amount
+        description: "Monthly recurring revenue normalized to a monthly value"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+      - name: amount
+        description: "Billed amount in the subscription billing cycle"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+      - name: start_date
+        description: "Subscription start date"
+        tests:
+          - not_null
+
+  - name: stg_plans
+    description: |
+      Cleaned plan catalog from the raw SaaS source.
+
+      Business Context:
+      Plans define pricing tiers and product packaging, used to segment revenue and retention.
+
+      Grain: One row per plan_id
+    columns:
+      - name: plan_id
+        description: "Unique plan identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: plan_tier
+        description: "Plan tier used for reporting (starter/professional/enterprise)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['starter', 'professional', 'enterprise']
+
+      - name: base_price_monthly
+        description: "Monthly list price for the plan"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+      - name: base_price_annual
+        description: "Annual list price for the plan"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+  - name: stg_payments
+    description: |
+      Cleaned payment transactions from the raw SaaS source.
+
+      Business Context:
+      Payments support revenue validation, involuntary churn analysis, and payment failure monitoring.
+
+      Grain: One row per payment_id
+    columns:
+      - name: payment_id
+        description: "Unique payment identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: subscription_id
+        description: "Foreign key to subscription"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_subscriptions')
+              field: subscription_id
+
+      - name: status
+        description: "Payment processing status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['success', 'failed', 'refunded']
+
+      - name: payment_method
+        description: "Payment method used"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['credit_card', 'bank_transfer', 'paypal']
+
+  - name: stg_usage_events
+    description: |
+      Cleaned product usage events from the raw SaaS source.
+
+      Business Context:
+      Usage is a leading indicator of retention and expansion; this model standardizes events for downstream rollups.
+
+      Grain: One row per event_id
+    columns:
+      - name: event_id
+        description: "Unique event identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: event_type
+        description: "Type of product event"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['login', 'feature_usage', 'export', 'api_call']
+
+      - name: usage_quantity
+        description: "Event intensity/quantity (units depend on event type)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+
+  - name: stg_support_tickets
+    description: |
+      Cleaned customer support tickets from the raw SaaS source.
+
+      Business Context:
+      Support tickets help explain churn risk and customer experience; used for churn reason and satisfaction analysis.
+
+      Grain: One row per ticket_id
+    columns:
+      - name: ticket_id
+        description: "Unique support ticket identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key to customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+      - name: category
+        description: "Support ticket category"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['billing', 'technical', 'feature_request', 'other']
+
+      - name: priority
+        description: "Support ticket priority"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['low', 'medium', 'high', 'urgent']
+
+      - name: satisfaction_score
+        description: "Post-resolution satisfaction score (1-5); null for unresolved tickets"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 5
+              row_condition: "satisfaction_score is not null"
+

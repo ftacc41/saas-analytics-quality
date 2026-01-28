@@ -1,0 +1,19 @@
+# Core dependencies
+dbt-core==1.7.0
+dbt-duckdb==1.7.0
+duckdb==0.9.2
+
+# Data generation
+faker==20.1.0
+pandas==2.1.4
+numpy==1.26.2
+
+# Quality & monitoring
+scipy==1.11.4
+
+# dbt runtime compatibility
+# dbt-core 1.7.x is not compatible with protobuf 5+ / 6+ JSON serialization API changes
+protobuf==4.25.3
+
+# Pin major versions, allow minor updates
+# This ensures reproducibility while getting security patches

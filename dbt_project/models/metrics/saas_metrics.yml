@@ -1,0 +1,9 @@
+version: 2
+
+# NOTE:
+# dbt 1.7+ expects Semantic Layer definitions (semantic_models / measures / metrics)
+# rather than the legacy `metrics:` config used in older dbt versions.
+#
+# We keep this file as a placeholder for Phase 3, but the semantic layer will be added
+# once we finalize the marts and decide which metrics should be centrally governed.
+

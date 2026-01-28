@@ -1,0 +1,5 @@
+# Data generation dependencies
+faker==20.1.0
+pandas==2.1.4
+numpy==1.26.2
+duckdb==0.9.2

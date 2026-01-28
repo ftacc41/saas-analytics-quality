@@ -1,0 +1,54 @@
+# Data files
+data/raw/*.csv
+data/raw/*.parquet
+data/warehouse/*.duckdb
+*.parquet
+
+# dbt artifacts
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+dbt_project/.dbt/
+dbt_project/.user.yml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.cursor/
+*.swp
+*.swo
+*~
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Evidence.dev
+dashboards/evidence_project/.sources/
+dashboards/evidence_project/.evidence/
+
+# Logs
+*.log
+
+# Local progress tracking (intentionally not committed)
+progress.md
