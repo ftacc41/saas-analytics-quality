@@ -63,7 +63,7 @@ We'll generate realistic subscription data using Python (Faker + custom logic) t
 - **Transformation**: dbt Core (show advanced features)
 - **Data Quality**: dbt_expectations + Great Expectations
 - **Data Generation**: Python (Faker, NumPy, Pandas)
-- **BI/Visualization**: Evidence.dev or Metabase
+- **BI/Visualization**: Looker Studio (Google Data Studio)
 - **Testing**: dbt tests + pytest for custom validations
 - **CI/CD**: GitHub Actions
 - **Documentation**: dbt docs + custom metrics catalog
@@ -86,12 +86,12 @@ We'll generate realistic subscription data using Python (Faker + custom logic) t
 - Exposures to link models to dashboards
 - Semantic layer (dbt metrics)
 
-**Evidence.dev over Metabase:**
-- Markdown-based BI (code-first)
-- Deploys to GitHub Pages (free hosting)
-- Version-controlled dashboards
-- Shows modern data stack knowledge
-- Alternative: Metabase is fine too
+**Looker Studio (Google Data Studio):**
+- Free, cloud-based BI platform
+- CSV file upload support for local development
+- Easy to use drag-and-drop interface
+- Perfect for portfolio projects and demos
+- No server setup required
 
 ### Project Structure
 ```
@@ -155,14 +155,13 @@ saas-analytics-quality/
 │   ├── requirements.txt
 │   └── README.md
 ├── dashboards/
-│   ├── evidence_project/           # Evidence.dev dashboards
-│   │   ├── pages/
-│   │   │   ├── index.md           # Executive summary
-│   │   │   ├── mrr.md             # MRR analysis
-│   │   │   ├── churn.md           # Churn analysis
-│   │   │   ├── cohorts.md         # Cohort retention
-│   │   │   └── unit_economics.md  # Unit economics
-│   │   └── sources/
+│   ├── DASHBOARD_BUILDING_GUIDE.md # Step-by-step visualization guide
+│   ├── README.md                   # Dashboard documentation
+│   ├── lookml/                     # LookML view files (optional)
+│   │   └── views/
+│   │       └── churn_analysis.view.lkml
+│   ├── scripts/                    # CSV export scripts (gitignored)
+│   ├── data/                       # Exported CSV files (gitignored)
 │   └── screenshots/                # Dashboard screenshots for portfolio
 ├── docs/
 │   ├── architecture_diagram.png
@@ -175,7 +174,7 @@ saas-analytics-quality/
 │       ├── dbt_tests.yml          # Run tests on PR
 │       └── deploy_docs.yml        # Deploy dbt docs to GH Pages
 ├── .gitignore
-├── docker-compose.yml              # Optional: for Metabase if not using Evidence
+├── docker-compose.yml              # Optional: for local database if needed
 ├── README.md
 └── project_context.md              # This file
 ```
@@ -680,7 +679,8 @@ def validate_mrr_logic():
 ### Phase 5: Visualization & Documentation (Week 5)
 **Goals:** Build dashboards and polish documentation
 
-- [ ] Set up Evidence.dev project (or Metabase)
+- [ ] Export CSVs for Looker Studio upload
+- [ ] Upload CSVs to Looker Studio
 - [ ] Build 5 core dashboards
 - [ ] Take high-quality screenshots
 - [ ] Create architecture diagram
@@ -727,9 +727,9 @@ def validate_mrr_logic():
 - [ ] Test coverage visible
 
 **Dashboards:**
-- [ ] 5 production-quality dashboards
+- [ ] 5 production-quality Looker Studio dashboards
 - [ ] High-resolution screenshots
-- [ ] Deployed Evidence.dev site (or Metabase exports)
+- [ ] CSV files exported and ready for upload
 
 **CI/CD:**
 - [ ] GitHub Actions workflow
@@ -780,7 +780,7 @@ Business Metrics Delivered:
 • dbt Core for transformations (macros, incremental models, semantic layer)
 • DuckDB for lightweight data warehousing
 • Python for data generation & monitoring
-• Evidence.dev for code-based dashboards
+• Looker Studio for cloud-based BI dashboards (CSV upload workflow)
 • GitHub Actions for CI/CD
 • 95%+ test coverage on analytics models
 
@@ -811,7 +811,7 @@ Looking for my next analytics engineering role where I can build reliable data f
 **Engagement Strategy:**
 1. Post mid-week (Tuesday-Thursday) around 9-11am
 2. Pin to your profile for maximum visibility
-3. Tag dbt Labs, DuckDB, Evidence.dev (they often share community projects)
+3. Tag dbt Labs, DuckDB, Looker Studio (they often share community projects)
 4. Respond to every comment within 24 hours
 5. Share in relevant LinkedIn groups (Analytics Engineering, dbt Community)
 

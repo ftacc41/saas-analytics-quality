@@ -47,6 +47,11 @@ Thumbs.db
 dashboards/evidence_project/.sources/
 dashboards/evidence_project/.evidence/
 
+# Tableau
+dashboards/*.twb
+dashboards/*.twbx.bak
+dashboards/Tableau Temp/
+
 # Logs
 *.log
 
@@ -55,3 +60,9 @@ progress.md
 
 # Cursor rules (local dev tooling)
 .cursorrules
+
+# Local dashboard build (CSV export scripts and data - regenerated locally)
+# Note: DASHBOARD_BUILDING_GUIDE.md and README.md are tracked
+dashboards/scripts/
+dashboards/data/
+dashboards/LOCAL_BUILD_INSTRUCTIONS.md

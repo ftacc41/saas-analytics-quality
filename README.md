@@ -29,7 +29,7 @@ Analyzing subscription business data to deliver reliable SaaS metrics and ensure
 - **Transformation**: dbt Core with advanced features
 - **Data Quality**: dbt_expectations + custom tests
 - **Data Generation**: Python (Faker, NumPy, Pandas)
-- **BI/Visualization**: Evidence.dev
+- **BI/Visualization**: Looker
 - **CI/CD**: GitHub Actions
 - **Documentation**: dbt docs + custom metrics catalog
 
@@ -48,7 +48,7 @@ saas-analytics-quality/
 │   ├── macros/              # Custom dbt macros
 │   └── tests/               # Custom tests
 ├── quality_monitoring/      # Python monitoring scripts
-├── dashboards/              # Evidence.dev dashboards
+├── dashboards/              # Looker dashboards and LookML models
 └── docs/                    # Documentation and diagrams
 ```
 
@@ -244,7 +244,8 @@ This project is for portfolio/educational purposes.
 
 - [dbt Documentation](https://docs.getdbt.com/)
 - [DuckDB Documentation](https://duckdb.org/docs/)
-- [Evidence.dev Documentation](https://docs.evidence.dev/)
+- [Looker Documentation](https://cloud.google.com/looker/docs)
+- [LookML Reference](https://cloud.google.com/looker/docs/reference/param-lookml-reference)
 - [SaaS Metrics Guide](https://www.saastr.com/saas-metrics/)
 
 ---
