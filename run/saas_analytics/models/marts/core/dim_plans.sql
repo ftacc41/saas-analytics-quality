@@ -1,0 +1,40 @@
+
+  
+    
+    
+
+    create  table
+      "saas_analytics"."main_marts"."dim_plans__dbt_tmp"
+  
+    as (
+      with plans as (
+    select
+        plan_id,
+        plan_name,
+        plan_tier,
+        base_price_monthly,
+        base_price_annual,
+        features,
+        max_users,
+        created_date
+    from "saas_analytics"."main_staging"."stg_plans"
+),
+
+final as (
+    select
+        plan_id,
+        plan_name,
+        plan_tier,
+        base_price_monthly,
+        base_price_annual,
+        max_users,
+        features,
+        created_date
+    from plans
+)
+
+select *
+from final
+    );
+  
+  
