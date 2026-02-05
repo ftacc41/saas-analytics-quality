@@ -1,6 +1,10 @@
 # SaaS Analytics & Data Quality Engineering Project
 
+[![dbt Tests](https://github.com/ftacc41/saas-analytics-quality/actions/workflows/dbt_tests.yml/badge.svg)](https://github.com/ftacc41/saas-analytics-quality/actions/workflows/dbt_tests.yml)
+
 A production-grade analytics platform for subscription-based SaaS businesses that demonstrates advanced analytics engineering skills, focusing on **depth over breadth** - showcasing mastery of data modeling, data quality, and business metrics.
+
+![Executive Dashboard](dashboards/screenshots/executive_sum.png)
 
 ## 🎯 Project Overview
 
@@ -24,14 +28,60 @@ Analyzing subscription business data to deliver reliable SaaS metrics and ensure
 
 ## 🏗️ Technical Architecture
 
+```mermaid
+flowchart TB
+    subgraph Data Generation
+        PY[Python<br/>Faker + NumPy]
+    end
+    
+    subgraph Storage
+        CSV[CSV Files]
+        DDB[(DuckDB<br/>Warehouse)]
+    end
+    
+    subgraph dbt Transformation
+        STG[Staging Models<br/>stg_*]
+        INT[Intermediate Models<br/>int_*]
+        MARTS[Marts Layer]
+        CORE[Core<br/>dim_* / fct_*]
+        SAAS[SaaS Metrics<br/>mrr, churn, ltv]
+    end
+    
+    subgraph Quality & CI/CD
+        TESTS[dbt Tests<br/>120+ validations]
+        GHA[GitHub Actions]
+    end
+    
+    subgraph Visualization
+        EXPORT[CSV Export]
+        LOOKER[Looker Studio<br/>Dashboards]
+    end
+    
+    PY --> CSV
+    CSV --> DDB
+    DDB --> STG
+    STG --> INT
+    INT --> MARTS
+    MARTS --> CORE
+    MARTS --> SAAS
+    CORE --> TESTS
+    SAAS --> TESTS
+    TESTS --> GHA
+    SAAS --> EXPORT
+    CORE --> EXPORT
+    EXPORT --> LOOKER
+```
+
 ### Tech Stack
-- **Data Warehouse**: DuckDB (lightweight, serverless)
-- **Transformation**: dbt Core with advanced features
-- **Data Quality**: dbt_expectations + custom tests
-- **Data Generation**: Python (Faker, NumPy, Pandas)
-- **BI/Visualization**: Looker
-- **CI/CD**: GitHub Actions
-- **Documentation**: dbt docs + custom metrics catalog
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Data Warehouse** | DuckDB | Lightweight, serverless analytics database |
+| **Transformation** | dbt Core | Data modeling with 22 models across 4 layers |
+| **Data Quality** | dbt_expectations + custom tests | 120+ automated tests |
+| **Data Generation** | Python (Faker, NumPy) | Realistic synthetic SaaS data |
+| **BI/Visualization** | Looker Studio | 5 production dashboards |
+| **CI/CD** | GitHub Actions | Automated testing on every PR |
+| **Documentation** | dbt docs + custom catalog | Full data lineage and metric definitions |
 
 ### Project Structure
 ```
@@ -169,13 +219,37 @@ dbt docs serve  # View documentation locally
 
 ## 📈 Dashboards
 
-The project includes 5 production-quality dashboards:
+The project includes 5 production-quality Looker Studio dashboards:
 
-1. **Executive Summary**: Key KPIs and trends
-2. **MRR Deep Dive**: MRR movement and trends
-3. **Churn Analysis**: Churn rates and reasons
-4. **Cohort Retention**: Retention curves by cohort
-5. **Unit Economics**: LTV, CAC, and efficiency metrics
+<details>
+<summary><b>1. Executive Summary</b> - Key KPIs and trends</summary>
+
+![Executive Summary](dashboards/screenshots/executive_sum.png)
+</details>
+
+<details>
+<summary><b>2. MRR Deep Dive</b> - MRR movement and breakdown</summary>
+
+![MRR Deep Dive](dashboards/screenshots/mmr_deep_dive.png)
+</details>
+
+<details>
+<summary><b>3. Churn Analysis</b> - Customer and revenue churn</summary>
+
+![Churn Analysis](dashboards/screenshots/churn_analysis.png)
+</details>
+
+<details>
+<summary><b>4. Cohort Retention</b> - Retention curves by cohort</summary>
+
+![Cohort Retention](dashboards/screenshots/cohort_retention.png)
+</details>
+
+<details>
+<summary><b>5. Unit Economics</b> - LTV, CAC, and efficiency metrics</summary>
+
+![Unit Economics](dashboards/screenshots/unit_economics.png)
+</details>
 
 ## 🔍 Monitoring & Alerts
 
@@ -186,11 +260,12 @@ Python scripts for data quality monitoring:
 
 ## 📚 Documentation
 
-- **README.md**: This file - project overview and setup
-- **project_context.md**: Detailed project context and phases
-- **dbt Documentation**: Auto-generated from dbt docs
-- **Metrics Catalog**: Business metric definitions
-- **Data Quality Report**: Test coverage summary
+| Document | Description |
+|----------|-------------|
+| **[README.md](README.md)** | Project overview and setup instructions |
+| **[Metrics Catalog](docs/metrics_catalog.md)** | Business definitions for all SaaS metrics |
+| **[Data Quality Report](docs/data_quality_report.md)** | Test coverage and quality strategy |
+| **dbt Docs** | Auto-generated data lineage and model documentation |
 
 
 ## 🛠️ Advanced dbt Features Demonstrated
@@ -219,6 +294,17 @@ This project is for portfolio/educational purposes.
 
 ---
 
-**Status**: Phase 1 Complete - Foundation setup and data generation ready.
+## 🎯 Project Highlights
 
-**Next Steps**: Begin Phase 2 - Build staging and intermediate models.
+| Metric | Value |
+|--------|-------|
+| **dbt Models** | 22 models across 4 layers |
+| **Automated Tests** | 120+ data quality validations |
+| **Test Coverage** | 95%+ on marts layer |
+| **Custom Macros** | 3 reusable SaaS calculation macros |
+| **Dashboards** | 5 production-quality visualizations |
+| **SaaS Metrics** | 15+ investor-grade metrics |
+
+---
+
+**Built with** dbt, DuckDB, Python, Looker Studio, and GitHub Actions
