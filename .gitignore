@@ -61,8 +61,11 @@ progress.md
 # Cursor rules (local dev tooling)
 .cursorrules
 
-# Local dashboard build (CSV export scripts and data - regenerated locally)
-# Note: DASHBOARD_BUILDING_GUIDE.md and README.md are tracked
+# Local dashboard build (CSV export scripts, data, and guides - regenerated locally)
 dashboards/scripts/
 dashboards/data/
 dashboards/LOCAL_BUILD_INSTRUCTIONS.md
+dashboards/DASHBOARD_BUILDING_GUIDE.md
+
+# Project planning notes (personal)
+saas_analytics_project.md
